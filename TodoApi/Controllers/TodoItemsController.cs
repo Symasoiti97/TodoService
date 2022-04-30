@@ -19,15 +19,15 @@ namespace TodoApi.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TodoItemDTO>>> GetTodoItems()
+        public async Task<ActionResult<IEnumerable<TodoItemDto>>> GetTodoItems()
         {
             return await _context.TodoItems
-                .Select(x => ItemToDTO(x))
+                .Select(x => ItemToDto(x))
                 .ToListAsync();
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<TodoItemDTO>> GetTodoItem(long id)
+        public async Task<ActionResult<TodoItemDto>> GetTodoItem(long id)
         {
             var todoItem = await _context.TodoItems.FindAsync(id);
 
@@ -36,13 +36,13 @@ namespace TodoApi.Controllers
                 return NotFound();
             }
 
-            return ItemToDTO(todoItem);
+            return ItemToDto(todoItem);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTodoItem(long id, TodoItemDTO todoItemDTO)
+        public async Task<IActionResult> UpdateTodoItem(long id, TodoItemDto todoItemDto)
         {
-            if (id != todoItemDTO.Id)
+            if (id != todoItemDto.Id)
             {
                 return BadRequest();
             }
@@ -53,8 +53,8 @@ namespace TodoApi.Controllers
                 return NotFound();
             }
 
-            todoItem.Name = todoItemDTO.Name;
-            todoItem.IsComplete = todoItemDTO.IsComplete;
+            todoItem.Name = todoItemDto.Name;
+            todoItem.IsComplete = todoItemDto.IsComplete;
 
             try
             {
@@ -69,12 +69,12 @@ namespace TodoApi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<TodoItemDTO>> CreateTodoItem(TodoItemDTO todoItemDTO)
+        public async Task<ActionResult<TodoItemDto>> CreateTodoItem(TodoItemDto todoItemDto)
         {
             var todoItem = new TodoItem
             {
-                IsComplete = todoItemDTO.IsComplete,
-                Name = todoItemDTO.Name
+                IsComplete = todoItemDto.IsComplete,
+                Name = todoItemDto.Name
             };
 
             _context.TodoItems.Add(todoItem);
@@ -82,8 +82,8 @@ namespace TodoApi.Controllers
 
             return CreatedAtAction(
                 nameof(GetTodoItem),
-                new { id = todoItem.Id },
-                ItemToDTO(todoItem));
+                new {id = todoItem.Id},
+                ItemToDto(todoItem));
         }
 
         [HttpDelete("{id}")]
@@ -103,14 +103,14 @@ namespace TodoApi.Controllers
         }
 
         private bool TodoItemExists(long id) =>
-             _context.TodoItems.Any(e => e.Id == id);
+            _context.TodoItems.Any(e => e.Id == id);
 
-        private static TodoItemDTO ItemToDTO(TodoItem todoItem) =>
-            new TodoItemDTO
+        private static TodoItemDto ItemToDto(TodoItem todoItem) =>
+            new TodoItemDto
             {
                 Id = todoItem.Id,
                 Name = todoItem.Name,
                 IsComplete = todoItem.IsComplete
-            };       
+            };
     }
 }
