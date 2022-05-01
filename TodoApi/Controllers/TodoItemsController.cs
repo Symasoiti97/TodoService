@@ -13,6 +13,7 @@ namespace TodoApi.Controllers
     /// Api for managing TodoItems
     /// </summary>
     [Route("api/[controller]")]
+    [Produces("application/json")]
     [ApiController]
     public class TodoItemsController : ControllerBase
     {
@@ -31,7 +32,7 @@ namespace TodoApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TodoItemDto>>> GetTodoItems()
         {
-            return await _context.TodoItems
+            return await _context.Set<TodoItemDb>()
                 .Select(x => ItemToDto(x))
                 .ToListAsync();
         }
@@ -47,7 +48,7 @@ namespace TodoApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<TodoItemDto>> GetTodoItem([FromRoute] long id)
         {
-            var todoItem = await _context.TodoItems.FindAsync(id);
+            var todoItem = await _context.Set<TodoItemDb>().FindAsync(id);
 
             if (todoItem == null)
             {
@@ -76,7 +77,7 @@ namespace TodoApi.Controllers
                 return BadRequest();
             }
 
-            var todoItem = await _context.TodoItems.FindAsync(id);
+            var todoItem = await _context.Set<TodoItemDb>().FindAsync(id);
             if (todoItem == null)
             {
                 return NotFound();
@@ -106,13 +107,13 @@ namespace TodoApi.Controllers
         [HttpPost]
         public async Task<ActionResult<TodoItemDto>> CreateTodoItem([FromBody, Required] TodoItemDto todoItemDto)
         {
-            var todoItem = new TodoItem
+            var todoItem = new TodoItemDb
             {
                 IsComplete = todoItemDto.IsComplete,
                 Name = todoItemDto.Name
             };
 
-            _context.TodoItems.Add(todoItem);
+            _context.Set<TodoItemDb>().Add(todoItem);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetTodoItem), new {id = todoItem.Id}, ItemToDto(todoItem));
@@ -129,22 +130,22 @@ namespace TodoApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTodoItem([FromRoute] long id)
         {
-            var todoItem = await _context.TodoItems.FindAsync(id);
+            var todoItem = await _context.Set<TodoItemDb>().FindAsync(id);
 
             if (todoItem == null)
             {
                 return NotFound();
             }
 
-            _context.TodoItems.Remove(todoItem);
+            _context.Set<TodoItemDb>().Remove(todoItem);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool TodoItemExists(long id) => _context.TodoItems.Any(e => e.Id == id);
+        private bool TodoItemExists(long id) => _context.Set<TodoItemDb>().Any(e => e.Id == id);
 
-        private static TodoItemDto ItemToDto(TodoItem todoItem) =>
+        private static TodoItemDto ItemToDto(TodoItemDb todoItem) =>
             new TodoItemDto
             {
                 Id = todoItem.Id,
