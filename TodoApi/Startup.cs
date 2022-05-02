@@ -1,3 +1,4 @@
+using DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -5,7 +6,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TodoApi.Extensions;
-using TodoApi.Models;
 using TodoApi.Swagger;
 
 namespace TodoApi
@@ -21,7 +21,7 @@ namespace TodoApi
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<TodoContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("TodoMsSqlServer")));
+            services.AddTodoServices(opt => opt.UseSqlServer(Configuration.GetConnectionString("TodoMsSqlServer")));
 
             services.AddControllers();
 

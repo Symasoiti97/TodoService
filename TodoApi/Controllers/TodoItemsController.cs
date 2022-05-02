@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using BusinessLayer;
+using BusinessLayer.Dto;
+using BusinessLayer.Exceptions;
 using Microsoft.AspNetCore.Http;
-using TodoApi.Models;
 
 namespace TodoApi.Controllers
 {
@@ -17,52 +18,53 @@ namespace TodoApi.Controllers
     [ApiController]
     public class TodoItemsController : ControllerBase
     {
-        private readonly TodoContext _context;
+        private readonly ITodoService _todoService;
 
-        public TodoItemsController(TodoContext context)
+        public TodoItemsController(ITodoService todoService)
         {
-            _context = context;
+            _todoService = todoService;
         }
 
         /// <summary>
         /// Get all TodoItems
         /// </summary>
+        /// <param name="cancellationToken"></param>
         /// <response code="200">TodoItems</response>
         [ProducesResponseType(typeof(IEnumerable<TodoItemDto>), StatusCodes.Status200OK)]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TodoItemDto>>> GetTodoItems()
+        public async Task<ActionResult<IEnumerable<TodoItemDto>>> GetTodoItems(CancellationToken cancellationToken)
         {
-            return await _context.Set<TodoItemDb>()
-                .Select(x => ItemToDto(x))
-                .ToListAsync();
+            return Ok(await _todoService.GetTodoDtoItemsAsync(cancellationToken));
         }
 
         /// <summary>
         /// Gets a specific TodoItem
         /// </summary>
         /// <param name="id" example="1"></param>
+        /// <param name="cancellationToken"></param>
         /// <response code="200">TodoItem</response>
         /// <response code="404">Not found</response>
         [ProducesResponseType(typeof(TodoItemDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpGet("{id}")]
-        public async Task<ActionResult<TodoItemDto>> GetTodoItem([FromRoute] long id)
+        public async Task<ActionResult<TodoItemDto>> GetTodoItem([FromRoute] long id, CancellationToken cancellationToken)
         {
-            var todoItem = await _context.Set<TodoItemDb>().FindAsync(id);
-
-            if (todoItem == null)
+            try
+            {
+                return await _todoService.GetTodoItemDtoAsync(id, cancellationToken);
+            }
+            catch (TodoItemNotFoundException)
             {
                 return NotFound();
             }
-
-            return ItemToDto(todoItem);
         }
 
         /// <summary>
         /// Updates a specific TodoItem
         /// </summary>
         /// <param name="id" example="1">A specific TodoItemId</param>
-        /// <param name="todoItemDto">A specific TodoItem for updating</param>
+        /// <param name="updateTodoItemDto">A specific TodoItem for updating</param>
+        /// <param name="cancellationToken"></param>
         /// <response code="204">TodoItem updated</response>
         /// <response code="400">Bad request</response>
         /// <response code="404">Not found</response>
@@ -70,87 +72,54 @@ namespace TodoApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTodoItem([FromRoute] long id, [FromBody, Required] TodoItemDto todoItemDto)
+        public async Task<IActionResult> UpdateTodoItem([FromRoute] long id, [FromBody] [Required] UpdateTodoItemDto updateTodoItemDto,
+            CancellationToken cancellationToken)
         {
-            if (id != todoItemDto.Id)
-            {
-                return BadRequest();
-            }
-
-            var todoItem = await _context.Set<TodoItemDb>().FindAsync(id);
-            if (todoItem == null)
-            {
-                return NotFound();
-            }
-
-            todoItem.Name = todoItemDto.Name;
-            todoItem.IsComplete = todoItemDto.IsComplete;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _todoService.UpdateTodoItemAsync(id, updateTodoItemDto, cancellationToken);
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException) when (!TodoItemExists(id))
+            catch (TodoItemNotFoundException)
             {
                 return NotFound();
             }
-
-            return NoContent();
         }
 
         /// <summary>
         /// Creates a TodoItem
         /// </summary>
         /// <param name="todoItemDto">A specific TodoItem for creating</param>
+        /// <param name="cancellationToken"></param>
         /// <response code="200">TodoItem created</response>
         [ProducesResponseType(typeof(TodoItemDto), StatusCodes.Status200OK)]
         [HttpPost]
-        public async Task<ActionResult<TodoItemDto>> CreateTodoItem([FromBody, Required] TodoItemDto todoItemDto)
+        public async Task<ActionResult<TodoItemDto>> CreateTodoItem([FromBody] [Required] CreateTodoItemDto todoItemDto, CancellationToken cancellationToken)
         {
-            var todoItem = new TodoItemDb
-            {
-                IsComplete = todoItemDto.IsComplete,
-                Name = todoItemDto.Name
-            };
-
-            _context.Set<TodoItemDb>().Add(todoItem);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetTodoItem), new {id = todoItem.Id}, ItemToDto(todoItem));
+            return await _todoService.CreateTodoItemAsync(todoItemDto, cancellationToken);
         }
 
         /// <summary>
         /// Deletes a specific TodoItem
         /// </summary>
         /// <param name="id" example="1">A specific TodoItemId</param>
+        /// <param name="cancellationToken"></param>
         /// <response code="204">TodoItem deleted</response>
         /// <response code="404">Not found</response>
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTodoItem([FromRoute] long id)
+        public async Task<IActionResult> DeleteTodoItem([FromRoute] long id, CancellationToken cancellationToken)
         {
-            var todoItem = await _context.Set<TodoItemDb>().FindAsync(id);
-
-            if (todoItem == null)
+            try
+            {
+                await _todoService.DeleteTodoItemAsync(id, cancellationToken);
+                return NoContent();
+            }
+            catch (TodoItemNotFoundException)
             {
                 return NotFound();
             }
-
-            _context.Set<TodoItemDb>().Remove(todoItem);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
-
-        private bool TodoItemExists(long id) => _context.Set<TodoItemDb>().Any(e => e.Id == id);
-
-        private static TodoItemDto ItemToDto(TodoItemDb todoItem) =>
-            new TodoItemDto
-            {
-                Id = todoItem.Id,
-                Name = todoItem.Name,
-                IsComplete = todoItem.IsComplete
-            };
     }
 }

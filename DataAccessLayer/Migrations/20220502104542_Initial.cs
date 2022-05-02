@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace TodoApi.Migrations
+namespace DataAccessLayer.Migrations
 {
     public partial class Initial : Migration
     {

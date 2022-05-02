@@ -16,6 +16,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\BusinessLayer\BusinessLayer.csproj" />
+      <ProjectReference Include="..\DataAccessLayer\DataAccessLayer.csproj" />
+      <ProjectReference Include="..\DependencyInjection\DependencyInjection.csproj" />
       <ProjectReference Include="..\Logger\Logger.csproj" />
     </ItemGroup>
 

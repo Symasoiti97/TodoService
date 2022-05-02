@@ -1,20 +1,14 @@
-﻿namespace TodoApi.Models
+﻿namespace BusinessLayer.Dto
 {
     /// <summary>
-    /// TodoItem
+    /// Contract for updating a specific TodoItem
     /// </summary>
-    public class TodoItemDto
+    public class UpdateTodoItemDto
     {
-        /// <summary>
-        /// ID TodoItem
-        /// </summary>
-        /// <example>1</example>
-        public long Id { get; set; }
-
         /// <summary>
         /// Name TodoItem
         /// </summary>
-        /// <example>My day</example>
+        /// <example>My day 2</example>
         public string Name { get; set; }
 
         /// <summary>
