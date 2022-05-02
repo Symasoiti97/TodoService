@@ -15,4 +15,8 @@
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.3.1" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Logger\Logger.csproj" />
+    </ItemGroup>
+
 </Project>
